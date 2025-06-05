@@ -24,10 +24,10 @@ a1=parsEsDou(3);a2=parsEsDou(4);
 I1=parsEsDou(5);I2=parsEsDou(6);
 
 %Gravity constant and the first pendulum arm length
-g=9.81;L=0.2667;
+g=0;L=0.2667;
 
 %Dapming ratio
-k1=0;k2=0;
+k1=1;k2=1;
 
 %Define the simulation time length
 Tf=10;dt=0.001;tspan=0:dt:Tf;
@@ -41,15 +41,24 @@ state0_test=[pi-1;pi-0.4;0.3;0.4];
 noise=0;
 
 % Define whehter you have control, if you have it, please define it
-Control=0;u=0;
+Control=1;
+u=[(sin(tspan).*1);(cos(tspan).*1)];
+u_test=[(sin(tspan_test).*1);(cos(tspan_test).*1)];
 
 %Define whether you want to shuffel the final data
 Shuffle=0;
 
 % Run the ODE files and gather the simulation data
-[dData,Data]=Get_Sim_Data(@(t,y)DouPenODE(t,y,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0,u,tspan,noise,Control,Shuffle);
+if Control==1
+[dData,Data]=Get_Sim_Data(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0,u,tspan,noise,Control,Shuffle);
 
-[dData_test,Data_test]=Get_Sim_Data(@(t,y)DouPenODE(t,y,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0_test,u,tspan,noise,Control,Shuffle);
+[dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0_test,u,tspan,noise,Control,Shuffle);
+else
+inp = 0;
+[dData,Data]=Get_Sim_Data(@(t,y)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0,u,tspan,noise,Control,Shuffle);
+
+[dData_test,Data_test]=Get_Sim_Data(@(t,y)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0_test,u,tspan,noise,Control,Shuffle);  
+end
 
 %% Plot the data
 figure(1)
@@ -80,7 +89,7 @@ set(gca,'FontSize',24)
 [dtat_length,n_state]=size(Data);
 
 % Define the control input(Should be zero in our example)
-n_control=0;
+n_control=2;
 
 % Choose whether you want to display actual ODE or not
 disp_actual_ode=1;
@@ -90,7 +99,12 @@ disp_actual_ode=1;
 actual=1;
 
 % Print the actual ODE we try to discover
-Print_ODEs(@(t,y)DouPenODE(t,y,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);
+if Control==1
+Print_ODEs(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);
+else
+n_control=0;
+Print_ODEs(@(t,y)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);
+end
 
 % Create symbolic states
 dz=sym('dz',[n_state,1]);
@@ -103,13 +117,15 @@ Highest_U_Order_Guess=0;
 % Then create the right hand side library parameters
 Highest_Poly_Order=1;
 Highest_Trig_Order=4;
-Highest_U_Order=0;
+Highest_U_Order=1;
 Highest_dPoly_Order=1;
 
 %% Define parameters for the sparese regression
 lam=[1e-4;5e-4;1e-3;2e-3;3e-3;4e-3;5e-3;6e-3;7e-3;8e-3;9e-3;1e-2;2e-2;3e-2;4e-2;5e-2;...
     6e-2;7e-2;8e-2;9e-2;1e-1;2e-1;3e-1;4e-1;5e-1;6e-1;7e-1;8e-1;9e-1;1;1.5;2;2.5;3;3.5;4;4.5;5;...
     6;7;8;9;10;20;30;40;50;100;200];
+% lam=[1e-2;2e-2;3e-2;4e-2;5e-2;...
+%     6e-2;7e-2;8e-2;9e-2;1e-1;2e-1;3e-1;4e-1];
 
 N_iter=20;
 disp=0;
@@ -123,13 +139,17 @@ for iter=1:n_state
     
     %Generate the corresponding data
     [SINDy_Data,SINDy_Struct]=SINDyLib(Data,dData(:,iter),iter,u,Highest_Poly_Order,Highest_Trig_Order,Highest_U_Order,Highest_dPoly_Order);
-    
+    for i = 1:length(SINDy_Struct)
+        fprintf('%s\n', SINDy_Struct{i});
+    end
+
     % Run the for loop and try all the left hand guess
     for i=1:length(LHS_Sym)
         if iter==1 && i==1
             Xi=cell(n_state,length(LHS_Sym),length(lam));
             ODE=cell(n_state,length(LHS_Sym),length(lam));
             ODEs=cell(n_state,length(LHS_Sym),length(lam));
+            fprintf("xd")
         end
 
         % Print the left hand side that we are testing
@@ -180,7 +200,7 @@ for iter=1:n_state
                 % Generate the ODE file
                 Generate_ODE_RHS(ODEs{iter,i,j},n_state,n_control);
                 % Calculate the accuracy of the file
-                Score(iter,i,j)=Get_Score(dData_test(:,iter),Data_test,u,Control,tspan_test,state0_test,Shuffle);
+                Score(iter,i,j)=Get_Score(dData_test(:,iter),Data_test,u,Control,tspan,state0_test,Shuffle,iter);
             end
         end
         
@@ -213,7 +233,11 @@ end
 % Also Print the actual ODE for comparison
 digits(4)
 fprintf('\n\n\n')
-Print_ODEs(@(t,y)DouPenODE(t,y,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);
+if Control==1
+Print_ODEs(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);
+else
+Print_ODEs(@(t,y)DouPenODE(t,y,u,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);   
+end
 
 %% Get the simulation result
 % Generate the ODE file
@@ -223,8 +247,8 @@ Generate_ODE_RHS(ODE_Best(:,1),n_state,n_control);
 % Define a new test data for the comparison
 Noise_test=0;
 state0_test=[pi+0.3;pi-0.5;0;0];
-[dData_Es,Data_Es]=Get_Sim_Data(@(t,z)Sindy_ODE_RHS(t,z,u),state0_test,u,tspan_test,Noise_test,Control,Shuffle);
-[dData_test,Data_test]=Get_Sim_Data(@(t,y)DouPenODE(t,y,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0_test,u,tspan_test,Noise_test,Control,Shuffle);
+[dData_Es,Data_Es]=Get_Sim_Data(@(t,z,inp)Sindy_ODE_RHS(t,z,inp),state0_test,u_test,tspan_test,Noise_test,Control,Shuffle);
+[dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0_test,u_test,tspan_test,Noise_test,Control,Shuffle);
 
 %% Save the result
 File_Name=strcat('Results/DoublePendulum_NoiseLevel_',num2str(noise),'.mat');

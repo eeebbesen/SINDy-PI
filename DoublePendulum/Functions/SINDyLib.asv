@@ -102,12 +102,12 @@ end
 
 %cos
 Data(:,Index)=X(:,3).*cos(Basis(:,3));
-Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,3));
-Index=Index+1;
+  Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,3));
+   Index=Index+1;
 
-Data(:,Index)=X(:,4).*cos(Basis(:,3));
-Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,3));
-Index=Index+1;
+   Data(:,Index)=X(:,4).*cos(Basis(:,3));
+   Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,3));
+   Index=Index+1;
 
 % Add dx term
 Data(:,Index)=dX(:,1);
@@ -120,13 +120,10 @@ for i=3:size(Basis,2)
    Index=Index+1;
 end
 
-% Add input
-Data(:,Index)=u(1,:);
-Sym_Struct{1,Index}=Symbol_u(1,1);
-Index=Index+1;
-
-Data(:,Index)=u(2,:);
-Sym_Struct{1,Index}=Symbol_u(2,1);
+% Add constant
+%Order zero:
+Data(:,Index)=u;
+Sym_Struct{1,Index}=Symbol_u;
 Index=Index+1;
 
 % Add constant
