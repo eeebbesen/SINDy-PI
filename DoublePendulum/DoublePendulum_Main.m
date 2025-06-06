@@ -9,25 +9,25 @@ close all;clear all; clc;
 [status,msg] = mkdir('Results');
 addpath('Functions')
 set(0,'defaulttextInterpreter','latex')
+format long
 %% Simulate the double pendulum and gather the simulation data
 
 %Load the system parameters, those parameters are based on the actual system
 load("EstimatedValueDou.mat")
 
 %Pendulum mass
-m1=parsEsDou(1);m2=parsEsDou(2);
+m1=0.1;m2=0.03;
 
-%Pendulum center of mass
-a1=parsEsDou(3);a2=parsEsDou(4);
-
-%Pendulum arm inertial
-I1=parsEsDou(5);I2=parsEsDou(6);
+%Pendulum arm length
+l1=1.5;l2=1;
 
 %Gravity constant and the first pendulum arm length
 g=0;L=0.2667;
 
 %Dapming ratio
-k1=1;k2=1;
+b1=5;b2=5;
+tau1=80;tau2=80;
+tanh_k=1000;
 
 %Define the simulation time length
 Tf=10;dt=0.001;tspan=0:dt:Tf;
@@ -42,22 +42,25 @@ noise=0;
 
 % Define whehter you have control, if you have it, please define it
 Control=1;
-u=[(sin(tspan).*1);(cos(tspan).*1)];
-u_test=[(sin(tspan_test).*1);(cos(tspan_test).*1)];
+u=[100 * ones(1, length(tspan)) + (sin(tspan*10).*20)
+   100 * ones(1, length(tspan)) + (cos(tspan*5).*40)];
+% u = [0.2 * ones(1, length(tspan)); 
+%      -0.1 * ones(1, length(tspan))];
+u_test=[(sin(tspan_test).*1);(cos(tspan_test).*5)];
 
 %Define whether you want to shuffel the final data
 Shuffle=0;
 
 % Run the ODE files and gather the simulation data
 if Control==1
-[dData,Data]=Get_Sim_Data(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0,u,tspan,noise,Control,Shuffle);
+[dData,Data]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0,u,tspan,noise,Control,Shuffle);
 
-[dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0_test,u,tspan,noise,Control,Shuffle);
+[dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0_test,u,tspan,noise,Control,Shuffle);
 else
 inp = 0;
-[dData,Data]=Get_Sim_Data(@(t,y)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0,u,tspan,noise,Control,Shuffle);
+[dData,Data]=Get_Sim_Data(@(t,y)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0,u,tspan,noise,Control,Shuffle);
 
-[dData_test,Data_test]=Get_Sim_Data(@(t,y)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0_test,u,tspan,noise,Control,Shuffle);  
+[dData_test,Data_test]=Get_Sim_Data(@(t,y)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0_test,u,tspan,noise,Control,Shuffle);  
 end
 
 %% Plot the data
@@ -100,10 +103,10 @@ actual=1;
 
 % Print the actual ODE we try to discover
 if Control==1
-Print_ODEs(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);
+Print_ODEs(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),n_state,n_control,disp_actual_ode,actual);
 else
 n_control=0;
-Print_ODEs(@(t,y)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);
+Print_ODEs(@(t,y)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),n_state,n_control,disp_actual_ode,actual);
 end
 
 % Create symbolic states
@@ -234,9 +237,9 @@ end
 digits(4)
 fprintf('\n\n\n')
 if Control==1
-Print_ODEs(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);
+Print_ODEs(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),n_state,n_control,disp_actual_ode,actual);
 else
-Print_ODEs(@(t,y)DouPenODE(t,y,u,m1,m2,a1,a2,L,I1,I2,k1,k2,g),n_state,n_control,disp_actual_ode,actual);   
+Print_ODEs(@(t,y)DouPenODE(t, y, u, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),n_state,n_control,disp_actual_ode,actual);   
 end
 
 %% Get the simulation result
@@ -248,7 +251,7 @@ Generate_ODE_RHS(ODE_Best(:,1),n_state,n_control);
 Noise_test=0;
 state0_test=[pi+0.3;pi-0.5;0;0];
 [dData_Es,Data_Es]=Get_Sim_Data(@(t,z,inp)Sindy_ODE_RHS(t,z,inp),state0_test,u_test,tspan_test,Noise_test,Control,Shuffle);
-[dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t,y,inp,m1,m2,a1,a2,L,I1,I2,k1,k2,g),state0_test,u_test,tspan_test,Noise_test,Control,Shuffle);
+[dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0_test,u_test,tspan_test,Noise_test,Control,Shuffle);
 
 %% Save the result
 File_Name=strcat('Results/DoublePendulum_NoiseLevel_',num2str(noise),'.mat');

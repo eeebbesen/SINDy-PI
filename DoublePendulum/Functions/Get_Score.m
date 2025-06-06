@@ -15,15 +15,15 @@ function [Score]=Get_Score(dData_test,Data_test,u,Control,tspan,state0,Shuffle,i
 
 
 %% Using one step prediction to get the simulation data
-ind = iter;
-dt = tspan(1,2)-tspan(1,1);
-dData_Es = zeros(size(dData_test));
-for i=1:length(Data_test(:,ind))
-dData_Es(i)=Sindy_ODE_RHS(0,Data_test(i,:)',u(:,i));
-Data_test(i+1,ind) = Data_test(i,ind) + dData_Es(i)*dt;
-end
+% ind = iter;
+% dt = tspan(1,2)-tspan(1,1);
+% dData_Es = zeros(size(dData_test));
+% for i=1:length(Data_test(:,ind))
+% dData_Es(i)=Sindy_ODE_RHS(0,Data_test(i,:)',u(:,i));
+% Data_test(i+1,ind) = Data_test(i,ind) + dData_Es(i)*dt;
+% end
 
-% dData_Es=Sindy_ODE_RHS(0,Data_test',u)';
+dData_Es=Sindy_ODE_RHS(0,Data_test',u)';
 
 % Get the score of the result
 Score=sum(norm(dData_test-dData_Es));

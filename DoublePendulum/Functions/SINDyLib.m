@@ -23,24 +23,27 @@ Basis=[X(:,1) X(:,2) X(:,1)-X(:,2) X(:,1)-2*X(:,2) 2*X(:,1)-X(:,2) 2*X(:,1)-2*X(
 Basis_Sym=[Symbol(1) Symbol(2) Symbol(1)-Symbol(2) Symbol(1)-2*Symbol(2) 2*Symbol(1)-Symbol(2) 2*Symbol(1)-2*Symbol(2)];
 
 % Add the trigonometric form
-for i=1:size(Basis,2)
-   Data(:,Index)=sin(Basis(:,i));
-   Sym_Struct{1,Index}=sin(Basis_Sym(1,i));
-   Index=Index+1;
-end
 
-for i=1:size(Basis,2)
-   Data(:,Index)=cos(Basis(:,i));
-   Sym_Struct{1,Index}=cos(Basis_Sym(1,i));
-   Index=Index+1;
-end
+%old
+% for i=1:size(Basis,2)
+%    Data(:,Index)=sin(Basis(:,i));
+%    Sym_Struct{1,Index}=sin(Basis_Sym(1,i));
+%    Index=Index+1;
+% end
+% 
+% for i=1:size(Basis,2)
+%    Data(:,Index)=cos(Basis(:,i));
+%    Sym_Struct{1,Index}=cos(Basis_Sym(1,i));
+%    Index=Index+1;
+% end
+% 
+% for i=3:size(Basis,2)
+%    Data(:,Index)=cos(Basis(:,i)).^2;
+%    Sym_Struct{1,Index}=cos(Basis_Sym(1,i))^2;
+%    Index=Index+1;
+% end
 
-for i=3:size(Basis,2)
-   Data(:,Index)=cos(Basis(:,i)).^2;
-   Sym_Struct{1,Index}=cos(Basis_Sym(1,i))^2;
-   Index=Index+1;
-end
-
+%old
 % Adding following terms will reduce the noise robustness
 % for i=3:size(Basis,2)
 %    Data(:,Index)=sin(Basis(:,1)).*cos(Basis(:,i));
@@ -76,37 +79,131 @@ Sym_Struct{1,Index}=Symbol(4);
 Index=Index+1;
 
 %sin
-for i=3:size(Basis,2)
-   Data(:,Index)=X(:,3).*sin(Basis(:,i));
-   Sym_Struct{1,Index}=Symbol(3)*sin(Basis_Sym(1,i));
-   Index=Index+1;
-end
 
-for i=3:size(Basis,2)
-   Data(:,Index)=X(:,4).*sin(Basis(:,i));
-   Sym_Struct{1,Index}=Symbol(4)*sin(Basis_Sym(1,i));
-   Index=Index+1;
-end
+%old
+% for i=3:size(Basis,2)
+%    Data(:,Index)=X(:,3).*sin(Basis(:,i));
+%    Sym_Struct{1,Index}=Symbol(3)*sin(Basis_Sym(1,i));
+%    Index=Index+1;
+% end
+% 
+% for i=3:size(Basis,2)
+%    Data(:,Index)=X(:,4).*sin(Basis(:,i));
+%    Sym_Struct{1,Index}=Symbol(4)*sin(Basis_Sym(1,i));
+%    Index=Index+1;
+% end
+% 
+% for i=3:size(Basis,2)
+%    Data(:,Index)=X(:,3).^2.*sin(Basis(:,i));
+%    Sym_Struct{1,Index}=Symbol(3)^2*sin(Basis_Sym(1,i));
+%    Index=Index+1;
+% end
+% 
+% for i=3:size(Basis,2)
+%    Data(:,Index)=X(:,4).^2.*sin(Basis(:,i));
+%    Sym_Struct{1,Index}=Symbol(4)^2*sin(Basis_Sym(1,i));
+%    Index=Index+1;
+% end
 
-for i=3:size(Basis,2)
-   Data(:,Index)=X(:,3).^2.*sin(Basis(:,i));
-   Sym_Struct{1,Index}=Symbol(3)^2*sin(Basis_Sym(1,i));
-   Index=Index+1;
-end
+%new
 
-for i=3:size(Basis,2)
-   Data(:,Index)=X(:,4).^2.*sin(Basis(:,i));
-   Sym_Struct{1,Index}=Symbol(4)^2*sin(Basis_Sym(1,i));
-   Index=Index+1;
-end
-
-%cos
-Data(:,Index)=X(:,3).*cos(Basis(:,3));
-Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,3));
+Data(:,Index)=X(:,3).*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(3)*sin(Basis_Sym(1,2));
 Index=Index+1;
 
-Data(:,Index)=X(:,4).*cos(Basis(:,3));
-Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,3));
+Data(:,Index)=X(:,4).*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(4)*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,3).^2.*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(3)^2*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,4).^2.*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(4)^2*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,4).*X(:,3).*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(4)*Symbol(3)*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+
+
+%cos
+
+%old
+% Data(:,Index)=X(:,3).*cos(Basis(:,3));
+% Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,3));
+% Index=Index+1;
+% 
+% Data(:,Index)=X(:,4).*cos(Basis(:,3));
+% Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,3));
+% Index=Index+1;
+
+Data(:,Index)=X(:,3).*cos(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,4).*cos(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,3).^2.*cos(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(3)^2*cos(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,4).^2.*cos(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(4)^2*cos(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,4).*X(:,3).*cos(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(4)*Symbol(3)*cos(Basis_Sym(1,2));
+Index=Index+1;
+
+% Trigonometric cross terms
+Data(:,Index)=X(:,3).*cos(Basis(:,2)).*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,4).*cos(Basis(:,2)).*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,3).^2.*cos(Basis(:,2)).*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(3)^2*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,4).^2.*cos(Basis(:,2)).*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(4)^2*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=X(:,3).*X(:,4).*cos(Basis(:,2)).*sin(Basis(:,2));
+Sym_Struct{1,Index}=Symbol(3)*Symbol(4)*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+% Sign term tanh
+Data(:,Index)=tanh(1000.*X(:,3));
+Sym_Struct{1,Index}=tanh(1000*Symbol(3));
+Index=Index+1;
+
+Data(:,Index)=tanh(1000.*X(:,4));
+Sym_Struct{1,Index}=tanh(1000*Symbol(4));
+Index=Index+1;
+
+Data(:,Index)=tanh(1000.*X(:,3)).*sin(Basis(:,2));
+Sym_Struct{1,Index}=tanh(1000*Symbol(3))*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=tanh(1000.*X(:,4)).*sin(Basis(:,2));
+Sym_Struct{1,Index}=tanh(1000*Symbol(4))*sin(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=tanh(1000.*X(:,3)).*cos(Basis(:,2));
+Sym_Struct{1,Index}=tanh(1000*Symbol(3))*cos(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=tanh(1000.*X(:,4)).*cos(Basis(:,2));
+Sym_Struct{1,Index}=tanh(1000*Symbol(4))*cos(Basis_Sym(1,2));
 Index=Index+1;
 
 % Add dx term
@@ -114,19 +211,33 @@ Data(:,Index)=dX(:,1);
 Sym_Struct{1,Index}=Symbol_dX(iter);
 Index=Index+1;
 
-for i=3:size(Basis,2)
-   Data(:,Index)=dX(:,1).*cos(Basis(:,i)).^2;
-   Sym_Struct{1,Index}=Symbol_dX(iter)*cos(Basis_Sym(1,i)).^2;
-   Index=Index+1;
-end
+%old
+% for i=3:size(Basis,2)
+%    Data(:,Index)=dX(:,1).*cos(Basis(:,i)).^2;
+%    Sym_Struct{1,Index}=Symbol_dX(iter)*cos(Basis_Sym(1,i)).^2;
+%    Index=Index+1;
+% end
+
+Data(:,Index)=dX(:,1).*cos(Basis(:,2)).^2;
+Sym_Struct{1,Index}=Symbol_dX(iter)*cos(Basis_Sym(1,2)).^2;
+Index=Index+1;
+
 
 % Add input
-Data(:,Index)=u(1,:);
+Data(:,Index)=u(1,:).';
 Sym_Struct{1,Index}=Symbol_u(1,1);
 Index=Index+1;
 
-Data(:,Index)=u(2,:);
+Data(:,Index)=u(1,:).'.*cos(Basis(:,2));
+Sym_Struct{1,Index}=Symbol_u(1,1)*cos(Basis_Sym(1,2));
+Index=Index+1;
+
+Data(:,Index)=u(2,:).';
 Sym_Struct{1,Index}=Symbol_u(2,1);
+Index=Index+1;
+
+Data(:,Index)=u(2,:).'.*cos(Basis(:,2));
+Sym_Struct{1,Index}=Symbol_u(2,1)*cos(Basis_Sym(1,2));
 Index=Index+1;
 
 % Add constant
