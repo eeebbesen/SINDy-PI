@@ -38,15 +38,22 @@ state0=[pi+1.2;pi-0.6;0;0];
 state0_test=[pi-1;pi-0.4;0.3;0.4];
 
 % Define noise level and add gaussian noise to the data
-noise=0;
+noise=0.5; %0.3 looks like pretty ok
+
+% Define whether you have only partial observability. No velocities
+Partial = 0;
+
+%Define wether you want to use iSINDy, integral sindy
+Integral = 1;
 
 % Define whehter you have control, if you have it, please define it
 Control=1;
-u=[100 * ones(1, length(tspan)) + (sin(tspan*10).*20)
-   100 * ones(1, length(tspan)) + (cos(tspan*5).*40)];
+u=[150 * ones(1, length(tspan)) + (sin(tspan*10).*20)
+   150 * ones(1, length(tspan)) + (cos(tspan*5).*40)];
 % u = [0.2 * ones(1, length(tspan)); 
 %      -0.1 * ones(1, length(tspan))];
-u_test=[(sin(tspan_test).*1);(cos(tspan_test).*5)];
+u_test=[150 * ones(1, length(tspan_test)) + (cos(tspan_test*10).*20)
+   150 * ones(1, length(tspan_test)) + (sin(tspan_test*5).*40)];
 
 %Define whether you want to shuffel the final data
 Shuffle=0;
@@ -63,6 +70,55 @@ inp = 0;
 [dData_test,Data_test]=Get_Sim_Data(@(t,y)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0_test,u,tspan,noise,Control,Shuffle);  
 end
 
+if Partial==1
+% --- Derivatives for training data ---
+PosData = Data(:, 1:2);
+VelData = gradient(PosData,dt);
+AccData = gradient(VelData,dt);
+AccData = dData(:, 3:4);
+
+% t = tspan(:);  % Ensure time is a column vector
+% h = 1e-5;      % Small step for second derivative approximation
+% 
+% for i = 1:2
+%     % Fit smoothing spline to theta data
+%     sp = fit(t, PosData(:, i), 'smoothingspline');
+% 
+%     % First derivative (velocity)
+%     VelData(:, i) = differentiate(sp, t);
+% 
+%     % Second derivative (acceleration) via central diff
+%     AccData(:, i) = gradient(VelData(:, i), t);
+% end
+% 
+PartialData = [PosData, VelData];
+PartialdData = [VelData, AccData];
+% 
+% % --- Derivatives for test data ---
+PosData = Data_test(:, 1:2);
+VelData = gradient(PosData,dt);
+AccData = gradient(VelData,dt);
+AccData = dData_test(:, 3:4);
+% 
+% for i = 1:2
+%     sp = fit(t, PosData(:, i), 'smoothingspline');
+%     VelData(:, i) = differentiate(sp, t);
+% 
+%     AccData(:, i) = gradient(VelData(:, i), t);
+% end
+% 
+PartialData_test = [PosData, VelData];
+PartialdData_test = [VelData, AccData];
+% 
+% % --- Assign final variables ---
+Data = PartialData;
+dData = PartialdData;
+Data_test = PartialData_test;
+dData_test = PartialdData_test;
+% 
+end
+
+
 %% Plot the data
 figure(1)
 plot(tspan,Data(:,3),'linewidth',3,'color','black')
@@ -75,6 +131,18 @@ plot(tspan,Data(:,4),'linewidth',3,'color','black')
 box('off')
 axis('on')
 set(gca,'FontSize',24)
+
+% figure(1)
+% plot(tspan,Data(:,1),'linewidth',3,'color','black')
+% box('off')
+% axis('on')
+% set(gca,'FontSize',24)
+% 
+% figure(2)
+% plot(tspan,Data(:,2),'linewidth',3,'color','black')
+% box('off')
+% axis('on')
+% set(gca,'FontSize',24)
 
 % figure(3)
 % plot(Data(:,3),dData(:,3),'linewidth',3,'color','black')
@@ -138,10 +206,11 @@ for iter=1:n_state
     fprintf('\n \n Calculating the %i expression...\n',iter)
     
     % According to the previous parameter generate the left hand side guess
-    [LHS_Data,LHS_Sym]=GuessLib(Data,dData(:,iter),iter,u,Highest_Poly_Order_Guess,Highest_Trig_Order_Guess,Highest_U_Order_Guess);
+    [LHS_Data,LHS_Sym]=GuessLib(Data,dData(:,iter),iter,u,Highest_Poly_Order_Guess,Highest_Trig_Order_Guess,Highest_U_Order_Guess, Integral, dt);
     
     %Generate the corresponding data
-    [SINDy_Data,SINDy_Struct]=SINDyLib(Data,dData(:,iter),iter,u,Highest_Poly_Order,Highest_Trig_Order,Highest_U_Order,Highest_dPoly_Order);
+    [SINDy_Data,SINDy_Struct]=SINDyLib(Data,dData(:,iter),iter,u,Highest_Poly_Order,Highest_Trig_Order,Highest_U_Order,Highest_dPoly_Order, Integral, dt);
+    %input("press space to continue, check LHS and RHS data")
     for i = 1:length(SINDy_Struct)
         fprintf('%s\n', SINDy_Struct{i});
     end

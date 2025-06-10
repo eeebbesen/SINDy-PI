@@ -30,8 +30,15 @@ else
     %Simulate the system ODE
     [t,y]=ode45(@(t,y)ODE(t,y),tspan,state0);
     y_list=y;
+
+    dt = tspan(2) - tspan(1);
+    for i = 1:2
+    VelData(:, i) = gradient(y(:, i), dt);
+    end
+
     % Get the derivative data
     d_y_list=ODE(0,y_list')';
+    y_list = [y(:,1),y(:,2),VelData(:,3),VelData(:,4)];
 end
 
 %% Add some noise to the system
