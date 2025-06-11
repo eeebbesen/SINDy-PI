@@ -43,32 +43,22 @@ Sym_Struct{1,Index}=1;
 
 %Could probably be improved, with integration methods more specific to the
 %library terms
-if Integral == 1
+if Integral > 0
     %prepare compensatory term, only used for iter > 2
     comp = -sin(2*Basis(:,2)).*X(:,4).*X(:,iter);
 
     %integrate all first order or lower derivatives and comp, trapezoidal TODO.
-    for i = 2:length(Data(:,1))
-        %create temporary integal value lists
-        % TID = Data;
-        % TIC = comp;
-        % TID(i,:) = TID(i-1,:) + (Data(i-1,:) + Data(i,:))/2.*dt;
-        % TIC(i,:) = TIC(i-1,:) + (comp(i-1,:) + comp(i,:))/2.*dt;
-        % 
-        % 
-        % Data = TID;
-        % comp = TIC;
+    Data = cumtrapz(dt,Data);
+    comp = cumtrapz(dt,comp);
 
-        Data(i,:) = Data(i-1,:) + Data(i,:).*dt;
-        comp(i,:) = comp(i-1,:) + comp(i,:).*dt;
-    end
-
-    %integrate the second order ones
-    if iter > 2
-        %first inedx fix
-        Data(:,1) = X(:,iter);
-        %second index fix
-        Data(:,2) = X(:,iter).*cos(Basis(:,2)).^2 - comp;
+    if Integral > 1
+        %integrate the second order ones
+        if iter > 2
+            %first inedx fix
+            Data(:,1) = X(:,iter);
+            %second index fix
+            Data(:,2) = X(:,iter).*cos(Basis(:,2)).^2 - comp;
+        end
     end
 
 end

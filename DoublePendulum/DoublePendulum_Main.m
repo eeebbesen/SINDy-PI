@@ -24,13 +24,13 @@ l1=1.5;l2=1;
 %Gravity constant and the first pendulum arm length
 g=0;L=0.2667;
 
-%Dapming ratio
+%Damping ratio
 b1=5;b2=5;
 tau1=80;tau2=80;
 tanh_k=1000;
 
 %Define the simulation time length
-Tf=10;dt=0.001;tspan=0:dt:Tf;
+Tf=10;dt=0.002;tspan=0:dt:Tf;
 T_test=3;tspan_test=0:dt:T_test;
 
 %Define the inital state of the pendulum: theta1, theta2, dtheta1, dtheta2
@@ -38,12 +38,16 @@ state0=[pi+1.2;pi-0.6;0;0];
 state0_test=[pi-1;pi-0.4;0.3;0.4];
 
 % Define noise level and add gaussian noise to the data
-noise=0.5; %0.3 looks like pretty ok
+noise=0.008; %0.3 looks like pretty ok
 
 % Define whether you have only partial observability. No velocities
-Partial = 0;
+Partial = 1;
+% Define whether you want to use smoothened measurements for partial.
+% Savitzky-Golay, maybe try splines.
+Smoothing = 1;
 
 %Define wether you want to use iSINDy, integral sindy
+%0, is no integral action, 1 is with acceleration, 2 is without
 Integral = 1;
 
 % Define whehter you have control, if you have it, please define it
@@ -61,7 +65,7 @@ Shuffle=0;
 % Run the ODE files and gather the simulation data
 if Control==1
 [dData,Data]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0,u,tspan,noise,Control,Shuffle);
-
+noise=0.00;
 [dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0_test,u,tspan,noise,Control,Shuffle);
 else
 inp = 0;
@@ -70,53 +74,99 @@ inp = 0;
 [dData_test,Data_test]=Get_Sim_Data(@(t,y)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0_test,u,tspan,noise,Control,Shuffle);  
 end
 
-if Partial==1
-% --- Derivatives for training data ---
-PosData = Data(:, 1:2);
-VelData = gradient(PosData,dt);
-AccData = gradient(VelData,dt);
-AccData = dData(:, 3:4);
-
-% t = tspan(:);  % Ensure time is a column vector
-% h = 1e-5;      % Small step for second derivative approximation
-% 
-% for i = 1:2
-%     % Fit smoothing spline to theta data
-%     sp = fit(t, PosData(:, i), 'smoothingspline');
-% 
-%     % First derivative (velocity)
-%     VelData(:, i) = differentiate(sp, t);
-% 
-%     % Second derivative (acceleration) via central diff
-%     AccData(:, i) = gradient(VelData(:, i), t);
-% end
-% 
-PartialData = [PosData, VelData];
-PartialdData = [VelData, AccData];
-% 
-% % --- Derivatives for test data ---
-PosData = Data_test(:, 1:2);
-VelData = gradient(PosData,dt);
-AccData = gradient(VelData,dt);
-AccData = dData_test(:, 3:4);
-% 
-% for i = 1:2
-%     sp = fit(t, PosData(:, i), 'smoothingspline');
-%     VelData(:, i) = differentiate(sp, t);
-% 
-%     AccData(:, i) = gradient(VelData(:, i), t);
-% end
-% 
-PartialData_test = [PosData, VelData];
-PartialdData_test = [VelData, AccData];
-% 
-% % --- Assign final variables ---
-Data = PartialData;
-dData = PartialdData;
-Data_test = PartialData_test;
-dData_test = PartialdData_test;
-% 
+if Partial==1 && Smoothing==0
+    
+    % training data
+    PosData = Data(:, 1:2);
+    VelData = zeros(size(PosData));
+    AccData = zeros(size(PosData));
+    
+    for i = 1:size(PosData, 2)
+        VelData(:, i) = gradient(PosData(:, i), dt);
+        AccData(:, i) = gradient(VelData(:, i), dt);
+    end
+    
+    PartialData = [PosData, VelData];
+    PartialdData = [VelData, AccData];
+    
+    % test data
+    PosData = Data_test(:, 1:2);
+    
+    for i = 1:size(PosData, 2)
+        VelData(:, i) = gradient(PosData(:, i), dt);
+        AccData(:, i) = gradient(VelData(:, i), dt);
+    end
+    % VelData = dData_test(:,1:2);
+    % AccData = dData_test(:,3:4);
+    
+    PartialData_test = [PosData, VelData];
+    PartialdData_test = [VelData, AccData];
+    % 
+    % % --- Assign final variables ---
+    Data = PartialData;
+    dData = PartialdData;
+    Data_test = PartialData_test;
+    dData_test = PartialdData_test;
+    % 
 end
+
+if Partial==1 && Smoothing==1
+
+    % Parameters for smoothing (tweak as needed)
+    sgolayOrder = 3;   % Polynomial order
+    sgolayWindow = 11; % Must be odd and > sgolayOrder
+    
+    % Preallocate
+    PosData = Data(:, 1:2);
+    VelData = zeros(size(PosData));
+    AccData = zeros(size(PosData));
+    
+    % Loop over each dimension (e.g., x, y)
+    for i = 1:size(PosData, 2)
+        % Smooth position
+        PosData(:, i) = sgolayfilt(PosData(:, i), sgolayOrder, sgolayWindow);
+    
+        % Compute smoothed velocity (first derivative)
+        VelData(:, i) = gradient(PosData(:, i), dt);
+        VelData(:, i) = sgolayfilt(VelData(:, i), sgolayOrder, sgolayWindow);
+    
+        % Compute smoothed acceleration (second derivative)
+        AccData(:, i) = gradient(VelData(:, i), dt);
+        AccData(:, i) = sgolayfilt(AccData(:, i), sgolayOrder, sgolayWindow);
+    end
+
+    PartialData = [PosData, VelData];
+    PartialdData = [VelData, AccData];
+
+    % Preallocate
+    PosData = Data_test(:, 1:2);
+
+    % Loop over each dimension (e.g., x, y)
+    for i = 1:size(PosData, 2)
+        % Smooth position
+        PosData(:, i) = sgolayfilt(PosData(:, i), sgolayOrder, sgolayWindow);
+    
+        % Compute smoothed velocity (first derivative)
+        VelData(:, i) = gradient(PosData(:, i), dt);
+        VelData(:, i) = sgolayfilt(VelData(:, i), sgolayOrder, sgolayWindow);
+    
+        % Compute smoothed acceleration (second derivative)
+        AccData(:, i) = gradient(VelData(:, i), dt);
+        AccData(:, i) = sgolayfilt(AccData(:, i), sgolayOrder, sgolayWindow);
+    end
+
+    % VelData = dData_test(:,1:2);
+    % AccData = dData_test(:,3:4);
+
+    PartialData_test = [PosData, VelData];
+    PartialdData_test = [VelData, AccData];
+
+    Data = PartialData;
+    dData = PartialdData;
+    Data_test = PartialData_test;
+    dData_test = PartialdData_test;
+end
+
 
 
 %% Plot the data
