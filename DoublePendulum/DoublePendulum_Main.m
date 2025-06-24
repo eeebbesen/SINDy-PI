@@ -50,8 +50,8 @@ else
        0.1*(cos(tspan.*25))];
     % u = [0.2 * ones(1, length(tspan)); 
     %      -0.1 * ones(1, length(tspan))];
-    u_test=[0.1*(sin(tspan_test).*25)
-       0.1*(cos(tspan_test).*25)];
+    u_test=[0.1*(sin(tspan_test.*25))
+       0.1*(cos(tspan_test.*25))];
 end
 
 %% Declare settings
@@ -72,7 +72,7 @@ sgolay_order = 4;   % Polynomial order
 sgolay_window = 55; %0n55, 0.1n185
 
 %To permorm SINDy, 1, else 0
-Sindy = 0;
+Sindy = 1;
 
 %Define wether you want to use iSINDy, integral sindy
 %0, is no integral action, 1 is with acceleration, 2 is without
@@ -86,9 +86,10 @@ ProvidedData = 1;
 loaded = load('C:\Users\ppiuq\Desktop\Test data 2\oddm sincos 0.1t 25f.mat');
 data_range = 24000:64000;
 data_type_range = 13:14;
+step = 10;
 
 %To perform nonlinear least squares, 1, else 0
-Nonlinlsq = 1;
+Nonlinlsq = 0;
 
 %% Get data
 
@@ -118,14 +119,15 @@ Data = [stateArray{1}.', stateArray{2}.'];
 u = [uArray{1};uArray{2}].*-0.33;
 tspan = tArray{1};
 
-% === Downsample: every 100th point ===
-step = 100;
+% === Downsample: every 100th point using "step" ===
 idx = 1:step:length(tspan);
 
 Data = Data(idx, :);
 Data_test = Data;
 u = u(:, idx);
 tspan = tspan(idx);
+tspan_test = tspan(1:1:round(size(u,2)/4));
+u_test = u(:,1:length(tspan_test));
 dt = tspan(2)-tspan(1);
 end
 
@@ -508,10 +510,14 @@ Generate_ODE_RHS(ODE_Best(:,1),n_state,n_control);
 
 % Define a new test data for the comparison
 Noise_test=0;
-state0_test=[pi+0.3;pi-0.5;0;0];
+state0_test=[Data(1,1:2).';0;0];
 [dData_Es,Data_Es]=Get_Sim_Data(@(t,z,inp)Sindy_ODE_RHS(t,z,inp),state0_test,u_test,tspan_test,Noise_test,Control,Shuffle);
+if ProvidedData ~= 1
 [dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0_test,u_test,tspan_test,Noise_test,Control,Shuffle);
-
+else
+    Data_test = Data(1:length(tspan_test),:);
+    dData_test = dData(1:length(tspan_test),:);
+end
 %% Save the result
 File_Name=strcat('Results/DoublePendulum_NoiseLevel_',num2str(noise),'.mat');
 save(File_Name,'Score','ODEs','ODE_Best','state0_test','Data_Es','dData_Es',...
