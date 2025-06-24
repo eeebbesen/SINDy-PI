@@ -13,15 +13,17 @@ function [d_Data,Data]=Get_Sim_Data(ODE,state0,u,tspan,Noise,Control,Shuffle)
 [N2,M2]=size(u);
 
 %% Get simulation data by simulating the system using ODE113
-
+opts = odeset('RelTol', 1e-3, 'AbsTol', 1e-6);  % default is 1e-3 / 1e-6
 % Determine the left hand side derivative
 if Control==1
     y_list(1,:)=state0;
     d_y_list(1,:)=ODE(0,y_list(1,:).',u(:,1));
 
     for i=2:length(u)
-        %disp(i)
-        [t_1,y_1] = ode113(@(t_1,y_1)ODE(t_1,y_1,u(:,i-1)),tspan(i-1:i),state0.');
+        if mod(i, 1000) == 0
+            disp(i)
+        end
+        [t_1,y_1] = ode15s(@(t_1,y_1)ODE(t_1,y_1,u(:,i-1)),tspan(i-1:i),state0.', opts);
         y_list(i,:)=y_1(end,:);
         d_y_list(i,:)=ODE(0,y_list(i,:).',u(:,i));
         state0=y_list(i,:);

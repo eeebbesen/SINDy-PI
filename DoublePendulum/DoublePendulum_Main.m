@@ -10,62 +10,93 @@ close all;clear all; clc;
 addpath('Functions')
 set(0,'defaulttextInterpreter','latex')
 format long
-%% Simulate the double pendulum and gather the simulation data
+%% Define model parameters
 
 %Load the system parameters, those parameters are based on the actual system
 load("EstimatedValueDou.mat")
 
 %Pendulum mass
-m1=0.1;m2=0.03;
+m1=0.01;m2=0.01;
 
 %Pendulum arm length
-l1=1.5;l2=1;
+l1=0.0925;l2=0.063;
 
 %Gravity constant and the first pendulum arm length
 g=0;L=0.2667;
 
 %Damping ratio
-b1=5;b2=5;
-tau1=80;tau2=80;
+b1=0.0075;b2=0.0120;
+tau1=0.011;tau2=0.022;
 tanh_k=1000;
+params_est = 0;
 
-%Define the simulation time length
-Tf=10;dt=0.002;tspan=0:dt:Tf;
-T_test=3;tspan_test=0:dt:T_test;
+%% Define trajectory
 
-%Define the inital state of the pendulum: theta1, theta2, dtheta1, dtheta2
-state0=[pi+1.2;pi-0.6;0;0];
-state0_test=[pi-1;pi-0.4;0.3;0.4];
+if params_est ~= 0
+    % For simulations with regression result
+    [m1,m2,b1,b2,tau1,tau2] = deal(params_est(1),params_est(2),params_est(3),params_est(4),params_est(5),params_est(6));
+    state0 = Data(1,1:4).';
+    state0_test=[pi-1;pi-0.4;0.3;0.4];
+else
+    %Define the simulation time length
+    Tf=1;dt=0.002;tspan=0:dt:Tf;
+    T_test=3;tspan_test=0:dt:T_test;
+    
+    %Define the inital state of the pendulum: theta1, theta2, dtheta1, dtheta2
+    state0=[0;0;0;0];
+    state0_test=[pi-1;pi-0.4;0.3;0.4];
+    
+    u=[0.1*(sin(tspan.*25))
+       0.1*(cos(tspan.*25))];
+    % u = [0.2 * ones(1, length(tspan)); 
+    %      -0.1 * ones(1, length(tspan))];
+    u_test=[0.1*(sin(tspan_test).*25)
+       0.1*(cos(tspan_test).*25)];
+end
 
-% Define noise level and add gaussian noise to the data
-noise=0.008; %0.3 looks like pretty ok
+%% Declare settings
 
-% Define whether you have only partial observability. No velocities
+%Define noise level and add gaussian noise to the data
+noise=0.0; %0.3 looks like pretty ok
+
+%Define whether you have control, if you have it, please define it
+Control=1;
+
+%Define whether you have only partial observability. No velocities
 Partial = 1;
-% Define whether you want to use smoothened measurements for partial.
+
+%Define whether you want to use smoothened measurements for partial.
 % Savitzky-Golay, maybe try splines.
 Smoothing = 1;
+sgolay_order = 4;   % Polynomial order
+sgolay_window = 55; %0n55, 0.1n185
+
+%To permorm SINDy, 1, else 0
+Sindy = 0;
 
 %Define wether you want to use iSINDy, integral sindy
 %0, is no integral action, 1 is with acceleration, 2 is without
 Integral = 1;
 
-% Define whehter you have control, if you have it, please define it
-Control=1;
-u=[150 * ones(1, length(tspan)) + (sin(tspan*10).*20)
-   150 * ones(1, length(tspan)) + (cos(tspan*5).*40)];
-% u = [0.2 * ones(1, length(tspan)); 
-%      -0.1 * ones(1, length(tspan))];
-u_test=[150 * ones(1, length(tspan_test)) + (cos(tspan_test*10).*20)
-   150 * ones(1, length(tspan_test)) + (sin(tspan_test*5).*40)];
-
 %Define whether you want to shuffel the final data
-Shuffle=0;
+Shuffle = 0;
 
+%If you have provided data 1, or 0 to simulate
+ProvidedData = 1;
+loaded = load('C:\Users\ppiuq\Desktop\Test data 2\oddm sincos 0.1t 25f.mat');
+data_range = 24000:64000;
+data_type_range = 13:14;
+
+%To perform nonlinear least squares, 1, else 0
+Nonlinlsq = 1;
+
+%% Get data
+
+if ProvidedData ~= 1
 % Run the ODE files and gather the simulation data
 if Control==1
 [dData,Data]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0,u,tspan,noise,Control,Shuffle);
-noise=0.00;
+
 [dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0_test,u,tspan,noise,Control,Shuffle);
 else
 inp = 0;
@@ -73,6 +104,32 @@ inp = 0;
 
 [dData_test,Data_test]=Get_Sim_Data(@(t,y)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0_test,u,tspan,noise,Control,Shuffle);  
 end
+
+else
+% Handle provided data
+vars = fieldnames(loaded);
+Y = loaded.(vars{1}).Y;         % Y is 1x29 struct array
+X = loaded.(vars{1}).X;         % Y is 1x29 struct array
+stateArray = arrayfun(@(x) x.Data(1,data_range), Y(data_type_range), 'UniformOutput', false);
+uArray = arrayfun(@(x) x.Data(1,data_range), Y(1:2), 'UniformOutput', false);
+tArray = arrayfun(@(x) x.Data(1,data_range), X(1), 'UniformOutput', false);
+
+Data = [stateArray{1}.', stateArray{2}.'];
+u = [uArray{1};uArray{2}].*-0.33;
+tspan = tArray{1};
+
+% === Downsample: every 100th point ===
+step = 100;
+idx = 1:step:length(tspan);
+
+Data = Data(idx, :);
+Data_test = Data;
+u = u(:, idx);
+tspan = tspan(idx);
+dt = tspan(2)-tspan(1);
+end
+
+%% smoothing and vel&acc estimation
 
 if Partial==1 && Smoothing==0
     
@@ -113,8 +170,8 @@ end
 if Partial==1 && Smoothing==1
 
     % Parameters for smoothing (tweak as needed)
-    sgolayOrder = 3;   % Polynomial order
-    sgolayWindow = 11; % Must be odd and > sgolayOrder
+    sgolayOrder = sgolay_order;   % Polynomial order
+    sgolayWindow = round((0.002 / dt) * sgolay_window) + mod(round((0.002 / dt) * sgolay_window) + 1, 2); % Must be odd and > sgolayOrder
     
     % Preallocate
     PosData = Data(:, 1:2);
@@ -134,7 +191,6 @@ if Partial==1 && Smoothing==1
         AccData(:, i) = gradient(VelData(:, i), dt);
         AccData(:, i) = sgolayfilt(AccData(:, i), sgolayOrder, sgolayWindow);
     end
-
     PartialData = [PosData, VelData];
     PartialdData = [VelData, AccData];
 
@@ -155,8 +211,8 @@ if Partial==1 && Smoothing==1
         AccData(:, i) = sgolayfilt(AccData(:, i), sgolayOrder, sgolayWindow);
     end
 
-    % VelData = dData_test(:,1:2);
-    % AccData = dData_test(:,3:4);
+    %VelData = dData_test(:,1:2);
+    %AccData = dData_test(:,3:4);
 
     PartialData_test = [PosData, VelData];
     PartialdData_test = [VelData, AccData];
@@ -167,7 +223,78 @@ if Partial==1 && Smoothing==1
     dData_test = PartialdData_test;
 end
 
+if Partial==1 && Smoothing==2
+    
+    % training data
+    PosData = Data(:, 1:2);
+    % VelData = zeros(size(PosData));
+    % AccData = zeros(size(PosData));
+    
+    for i = 1:size(PosData, 2)
+        eyu = TVRegDiff(PosData(:,i), 200, 0.03, [], 'small', 1e-6, dt, 0, 0);
+        VelData(:, i) = eyu(1:end-1);
+        eyu = TVRegDiff(VelData(:,i), 200, 0.03, [], 'small', 1e-6, dt, 0, 0);
+        AccData(:, i) = eyu(1:end-1);
+        
+    end
+    figure(2)
+    plot(tspan,AccData(:,1),'linewidth',3,'color','black')
+    box('off')
+    axis('on')
+    set(gca,'FontSize',24)
+    
+    figure(3)
+    plot(tspan,VelData(:,1),'linewidth',3,'color','black')
+    box('off')
+    axis('on')
+    set(gca,'FontSize',24)
+    PartialData = [PosData, VelData];
+    PartialdData = [VelData, AccData];
+    
+    % test data
+    PosData = Data_test(:, 1:2);
+    
+    for i = 1:size(PosData, 2)
+        VelData(:, i) = gradient(PosData(:, i), dt);
+        AccData(:, i) = gradient(VelData(:, i), dt);
+    end
+     VelData = dData_test(:,1:2);
+     AccData = dData_test(:,3:4);
+    
+    PartialData_test = [PosData, VelData];
+    PartialdData_test = [VelData, AccData];
+    % 
+    % % --- Assign final variables ---
+    Data = PartialData;
+    dData = PartialdData;
+    Data_test = PartialData_test;
+    dData_test = PartialdData_test;
+    % 
+end
 
+%% white box, regular regression
+if Nonlinlsq == 1
+state_data = [Data,dData(:,3:4)]; u_data = u;
+lsqres = @(vars) residuals(state_data, u_data, tspan, l1, l2, 1000, vars(1), vars(2), vars(3), vars(4), vars(5), vars(6));
+
+initial_guess = [0.02, 0.01, 0.001 0.001, 0.001, 0.001];
+upper_bounds = [0.5, 0.5, 50, 50, 0.05, 0.05];
+lower_bounds = [0.01, 0.01, 0.0001, 0.0001, 0.0001, 0.0001];
+options = optimoptions('lsqnonlin', ...
+    'Algorithm', 'levenberg-marquardt', ...
+    'FiniteDifferenceType', 'central', ....
+    'FunctionTolerance', 1e-6, ...   % Stop when resnorm change is small
+    'StepTolerance',     1e-6, ...   % Stop when parameters stop changing
+    'OptimalityTolerance', 1e-4, ... % Optional: controls gradient flatness
+    'MaxIterations', 200, ...
+    'MaxFunctionEvaluations', 1e5, ...
+    'Display', 'Iter-detailed');
+
+params_est = lsqnonlin(lsqres, initial_guess, ...
+                     lower_bounds, upper_bounds, ...
+                     options);         % No nonlinear constraints
+disp(params_est)
+end
 
 %% Plot the data
 figure(1)
@@ -181,18 +308,30 @@ plot(tspan,Data(:,4),'linewidth',3,'color','black')
 box('off')
 axis('on')
 set(gca,'FontSize',24)
-
-% figure(1)
-% plot(tspan,Data(:,1),'linewidth',3,'color','black')
-% box('off')
-% axis('on')
-% set(gca,'FontSize',24)
 % 
-% figure(2)
-% plot(tspan,Data(:,2),'linewidth',3,'color','black')
-% box('off')
-% axis('on')
-% set(gca,'FontSize',24)
+figure(3)
+plot(tspan,Data(:,1),'linewidth',3,'color','black')
+box('off')
+axis('on')
+set(gca,'FontSize',24)
+
+figure(4)
+plot(tspan,Data(:,2),'linewidth',3,'color','black')
+box('off')
+axis('on')
+set(gca,'FontSize',24)
+
+figure(5)
+plot(tspan,u(1,:),'linewidth',3,'color','black')
+box('off')
+axis('on')
+set(gca,'FontSize',24)
+
+figure(6)
+plot(tspan,u(2,:),'linewidth',3,'color','black')
+box('off')
+axis('on')
+set(gca,'FontSize',24)
 
 % figure(3)
 % plot(Data(:,3),dData(:,3),'linewidth',3,'color','black')
@@ -205,6 +344,7 @@ set(gca,'FontSize',24)
 % axis('off')
 
 %% Now perform sparse regression of non-linear dynamics
+if Sindy == 1
 
 % Get the number of states we have
 [dtat_length,n_state]=size(Data);
@@ -450,4 +590,5 @@ grid on
 set(gcf,'Position',[100 100 600 400]);
 set(gcf,'PaperPositionMode','auto');
 print('-depsc2', '-loose', 'Figures/DoublePendulum_PhasePlot_dTheta1_vs_dTheta2.eps');
+end
 

@@ -9,8 +9,8 @@ function dydt = DouPenODE(t, y, u, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k)
     % Precompute terms for readability
     cos_theta2 = cos(theta2);
     sin_theta2 = sin(theta2);
-    tanh_dtheta1 = tanh(tanh_k * dtheta1);
-    tanh_dtheta2 = tanh(tanh_k * dtheta2);
+    tanh_dtheta1 = tau1*tanh(tanh_k * dtheta1);
+    tanh_dtheta2 = tau2*tanh(tanh_k * dtheta2);
 
     % Denominators
     D1 = l1^2 * l2 * m1 - l1^2 * l2 * m2 * cos_theta2.^2 + l1^2 * l2 * m2;
@@ -24,9 +24,9 @@ function dydt = DouPenODE(t, y, u, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k)
     D2 = l1^2 * l2^2 * m1 * m2 - l1^2 * l2^2 * m2.^2 .* cos_theta2.^2 + l1^2 * l2^2 * m2.^2;
 
     % ddtheta1
-    num1 = (-l1 * cos_theta2 - l2) .* (-b2 .* dtheta2 - dtheta1.^2 .* l1 .* l2 .* m2 .* sin_theta2 - tau2 .* tanh_dtheta2 + u2);
+    num1 = (-l1 * cos_theta2 - l2) .* (-b2 .* dtheta2 - dtheta1.^2 .* l1 .* l2 .* m2 .* sin_theta2 - tanh_dtheta2 + u2);
     num2 = l2 .* (-b1 .* dtheta1 + 2 .* dtheta1 .* dtheta2 .* l1 .* l2 .* m2 .* sin_theta2 + ...
-           dtheta2.^2 .* l1 .* l2 .* m2 .* sin_theta2 - tau1 .* tanh_dtheta1 + u1);
+           dtheta2.^2 .* l1 .* l2 .* m2 .* sin_theta2 - tanh_dtheta1 + u1);
     ddtheta1 = (num1 + num2)./ D1;
     
     % disp(num1)
@@ -35,8 +35,8 @@ function dydt = DouPenODE(t, y, u, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k)
     % ddtheta2
     num2_1 = m2 .* l2 .* ((-l1 .* cos_theta2 - l2) .* ...
               (-b1 .* dtheta1 + 2 .* dtheta1 .* dtheta2 .* l1 .* l2 .* m2 .* sin_theta2 + ...
-               dtheta2.^2 .* l1 .* l2 .* m2 .* sin_theta2 - tau1 .* tanh_dtheta1 + u1));
-    num2_2 = (-b2 .* dtheta2 - dtheta1.^2 .* l1 .* l2 .* m2 .* sin_theta2 - tau2 .* tanh_dtheta2 + u2) .* ...
+               dtheta2.^2 .* l1 .* l2 .* m2 .* sin_theta2 - tanh_dtheta1 + u1));
+    num2_2 = (-b2 .* dtheta2 - dtheta1.^2 .* l1 .* l2 .* m2 .* sin_theta2 - tanh_dtheta2 + u2) .* ...
              (l1.^2 .* m1 + l1.^2 .* m2 + 2 .* l1 .* l2 .* m2 .* cos_theta2 + l2.^2 .* m2);
     ddtheta2 = (num2_1 + num2_2) ./ D2;
     % disp(size(dtheta1))
