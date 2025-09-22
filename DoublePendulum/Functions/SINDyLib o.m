@@ -34,15 +34,8 @@ Index=Index+1;
 %    Sym_Struct{1,Index}=Symbol_dX(iter)*cos(Basis_Sym(1,i)).^2;
 %    Index=Index+1;
 % end
-
 Data(:,Index)=dX(:,1).*cos(Basis(:,2));
 Sym_Struct{1,Index}=Symbol_dX(iter)*cos(Basis_Sym(1,2));
-Index=Index+1;
-
-Data(:,Index)=dX(:,1).*cos(Basis(:,2)).^2;
-Sym_Struct{1,Index}=Symbol_dX(iter)*cos(Basis_Sym(1,2)).^2;
-Index=Index+1;
-
 
 % Add the trigonometric form
 
@@ -100,18 +93,6 @@ Data(:,Index)=X(:,4);
 Sym_Struct{1,Index}=Symbol(4);
 Index=Index+1;
 
-% Data(:,Index)=X(:,3).^2;
-% Sym_Struct{1,Index}=Symbol(3)^2;
-% Index=Index+1;
-
-% Data(:,Index)=X(:,4).^2;
-% Sym_Struct{1,Index}=Symbol(4)^2;
-% Index=Index+1;
-% 
-% Data(:,Index)=X(:,4).*X(:,3);
-% Sym_Struct{1,Index}=Symbol(4)*Symbol(3);
-% Index=Index+1;
-
 %sin
 
 %old
@@ -140,7 +121,7 @@ Index=Index+1;
 % end
 
 %new
-
+% 
 % Data(:,Index)=X(:,3).*sin(Basis(:,2));
 % Sym_Struct{1,Index}=Symbol(3)*sin(Basis_Sym(1,2));
 % Index=Index+1;
@@ -148,44 +129,40 @@ Index=Index+1;
 % Data(:,Index)=X(:,4).*sin(Basis(:,2));
 % Sym_Struct{1,Index}=Symbol(4)*sin(Basis_Sym(1,2));
 % Index=Index+1;
-
-Data(:,Index)=X(:,3).^2.*sin(Basis(:,2));
-Sym_Struct{1,Index}=Symbol(3)^2*sin(Basis_Sym(1,2));
-Index=Index+1;
-
-Data(:,Index)=X(:,4).^2.*sin(Basis(:,2));
-Sym_Struct{1,Index}=Symbol(4)^2*sin(Basis_Sym(1,2));
-Index=Index+1;
-
-Data(:,Index)=X(:,4).*X(:,3).*sin(Basis(:,2));
-Sym_Struct{1,Index}=Symbol(4)*Symbol(3)*sin(Basis_Sym(1,2));
-Index=Index+1;
+% 
+% Data(:,Index)=X(:,3).^2.*sin(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol(3)^2*sin(Basis_Sym(1,2));
+% Index=Index+1;
+% 
+% Data(:,Index)=X(:,4).^2.*sin(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol(4)^2*sin(Basis_Sym(1,2));
+% Index=Index+1;
+% 
+% Data(:,Index)=X(:,4).*X(:,3).*sin(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol(4)*Symbol(3)*sin(Basis_Sym(1,2));
+% Index=Index+1;
 
 
 
 %cos
 
 %old
-% Data(:,Index)=cos(Basis(:,2));
-% Sym_Struct{1,Index}=cos(Basis_Sym(1,2));
-% Index=Index+1;
-% 
-% Data(:,Index)=cos(Basis(:,2)).^2;
-% Sym_Struct{1,Index}=cos(Basis_Sym(1,2))^2;
+% Data(:,Index)=X(:,3).*cos(Basis(:,3));
+% Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,3));
 % Index=Index+1;
 % 
 % Data(:,Index)=X(:,4).*cos(Basis(:,3));
 % Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,3));
 % Index=Index+1;
 
-Data(:,Index)=X(:,3).*cos(Basis(:,2));
-Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,2));
-Index=Index+1;
-
-Data(:,Index)=X(:,4).*cos(Basis(:,2));
-Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,2));
-Index=Index+1;
-
+% Data(:,Index)=X(:,3).*cos(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,2));
+% Index=Index+1;
+% 
+% Data(:,Index)=X(:,4).*cos(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,2));
+% Index=Index+1;
+% 
 % Data(:,Index)=X(:,3).^2.*cos(Basis(:,2));
 % Sym_Struct{1,Index}=Symbol(3)^2*cos(Basis_Sym(1,2));
 % Index=Index+1;
@@ -198,7 +175,7 @@ Index=Index+1;
 % Sym_Struct{1,Index}=Symbol(4)*Symbol(3)*cos(Basis_Sym(1,2));
 % Index=Index+1;
 
-% Trigonometric cross terms
+% % Trigonometric cross terms
 % Data(:,Index)=X(:,3).*cos(Basis(:,2)).*sin(Basis(:,2));
 % Sym_Struct{1,Index}=Symbol(3)*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
 % Index=Index+1;
@@ -206,18 +183,18 @@ Index=Index+1;
 % Data(:,Index)=X(:,4).*cos(Basis(:,2)).*sin(Basis(:,2));
 % Sym_Struct{1,Index}=Symbol(4)*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
 % Index=Index+1;
-
-Data(:,Index)=X(:,3).^2.*cos(Basis(:,2)).*sin(Basis(:,2));
-Sym_Struct{1,Index}=Symbol(3)^2*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
-Index=Index+1;
-
-Data(:,Index)=X(:,4).^2.*cos(Basis(:,2)).*sin(Basis(:,2));
-Sym_Struct{1,Index}=Symbol(4)^2*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
-Index=Index+1;
-
-Data(:,Index)=X(:,3).*X(:,4).*cos(Basis(:,2)).*sin(Basis(:,2));
-Sym_Struct{1,Index}=Symbol(3)*Symbol(4)*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
-Index=Index+1;
+% 
+% Data(:,Index)=X(:,3).^2.*cos(Basis(:,2)).*sin(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol(3)^2*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
+% Index=Index+1;
+% 
+% Data(:,Index)=X(:,4).^2.*cos(Basis(:,2)).*sin(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol(4)^2*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
+% Index=Index+1;
+% 
+% Data(:,Index)=X(:,3).*X(:,4).*cos(Basis(:,2)).*sin(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol(3)*Symbol(4)*cos(Basis_Sym(1,2))*sin(Basis_Sym(1,2));
+% Index=Index+1;
 
 % Sign term tanh
 Data(:,Index)=tanh(1000.*X(:,3));
@@ -227,7 +204,7 @@ Index=Index+1;
 Data(:,Index)=tanh(1000.*X(:,4));
 Sym_Struct{1,Index}=tanh(1000*Symbol(4));
 Index=Index+1;
-
+% 
 % Data(:,Index)=tanh(1000.*X(:,3)).*sin(Basis(:,2));
 % Sym_Struct{1,Index}=tanh(1000*Symbol(3))*sin(Basis_Sym(1,2));
 % Index=Index+1;
@@ -235,36 +212,36 @@ Index=Index+1;
 % Data(:,Index)=tanh(1000.*X(:,4)).*sin(Basis(:,2));
 % Sym_Struct{1,Index}=tanh(1000*Symbol(4))*sin(Basis_Sym(1,2));
 % Index=Index+1;
-
-Data(:,Index)=tanh(1000.*X(:,3)).*cos(Basis(:,2));
-Sym_Struct{1,Index}=tanh(1000*Symbol(3))*cos(Basis_Sym(1,2));
-Index=Index+1;
-
-Data(:,Index)=tanh(1000.*X(:,4)).*cos(Basis(:,2));
-Sym_Struct{1,Index}=tanh(1000*Symbol(4))*cos(Basis_Sym(1,2));
-Index=Index+1;
+% 
+% Data(:,Index)=tanh(1000.*X(:,3)).*cos(Basis(:,2));
+% Sym_Struct{1,Index}=tanh(1000*Symbol(3))*cos(Basis_Sym(1,2));
+% Index=Index+1;
+% 
+% Data(:,Index)=tanh(1000.*X(:,4)).*cos(Basis(:,2));
+% Sym_Struct{1,Index}=tanh(1000*Symbol(4))*cos(Basis_Sym(1,2));
+% Index=Index+1;
 
 % Add input
 Data(:,Index)=u(1,:).';
 Sym_Struct{1,Index}=Symbol_u(1,1);
 Index=Index+1;
 
-Data(:,Index)=u(1,:).'.*cos(Basis(:,2));
-Sym_Struct{1,Index}=Symbol_u(1,1)*cos(Basis_Sym(1,2));
-Index=Index+1;
+% Data(:,Index)=u(1,:).'.*cos(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol_u(1,1)*cos(Basis_Sym(1,2));
+% Index=Index+1;
 
 Data(:,Index)=u(2,:).';
 Sym_Struct{1,Index}=Symbol_u(2,1);
 Index=Index+1;
 
-Data(:,Index)=u(2,:).'.*cos(Basis(:,2));
-Sym_Struct{1,Index}=Symbol_u(2,1)*cos(Basis_Sym(1,2));
-Index=Index+1;
+% Data(:,Index)=u(2,:).'.*cos(Basis(:,2));
+% Sym_Struct{1,Index}=Symbol_u(2,1)*cos(Basis_Sym(1,2));
+% Index=Index+1;
 
 % Add constant
 %Order zero:
-Data(:,Index)=ones(Data_Length,1);
-Sym_Struct{1,Index}=1;
+% Data(:,Index)=ones(Data_Length,1);
+% Sym_Struct{1,Index}=1;
 
 
 %Could probably be improved, with integration methods more specific to the

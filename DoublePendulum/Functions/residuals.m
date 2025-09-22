@@ -1,4 +1,4 @@
-function res = residuals(state_data, u_data, time, l1, l2, tanh_k, m1, m2, b1, b2, tau1, tau2)
+function res = residuals(state_data, u_data, time, l1, l2, tanh_k, m1, m2, Jm1, Jm2, b1, b2, tau1, tau2)
 
     % % Extract measured states
     % theta_measured = state_data(:,1:2);        % Measured θ1, θ2
@@ -41,21 +41,22 @@ function res = residuals(state_data, u_data, time, l1, l2, tanh_k, m1, m2, b1, b
     % end
 
 
-    noise = 0;
-    Control = 1;
-    Shuffle = 0;
-    state0 = state_data(1,1:4).';
-    [dData,Data] = Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, b1, b2, tau1, tau2, tanh_k),state0,u_data,time,noise,Control,Shuffle);
-
-    % Residuals between simulated and measured θ1, θ2 (flattened for lsqnonlin)
-    res(:,1) = (Data(:,1) - state_data(:,1));
-    res(:,2) = (Data(:,2) - state_data(:,2));
+    % noise = 0;
+    % Control = 1;
+    % Shuffle = 0;
+    % state0 = state_data(1,1:4).';
+    % [dData,Data] = Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, Jm1, Jm2, b1, b2, tau1, tau2, tanh_k),state0,u_data,time,noise,Control,Shuffle);
+    % 
+    % % Residuals between simulated and measured θ1, θ2 (flattened for lsqnonlin)
+    % res(:,1) = (Data(:,1) - state_data(:,1));
+    % res(:,2) = (Data(:,2) - state_data(:,2));
     
 
-    % estimated_data1 = DouPenODE(0, state_data(:,1:4).', u_data, l1, l2, m1, m2, b1, b2, tau1p, tau1n, tau2p, tau2n, tanh_k);
-    % estimated_data = estimated_data1.';
-    % residuals = (estimated_data(:,1) - state_data(:,3)).^2 + (estimated_data(:,2) - state_data(:,4)).^2 + ...
+    estimated_data1 = DouPenODE(0, state_data(:,1:4).', u_data, l1, l2, m1, m2, Jm1, Jm2, b1, b2, tau1, tau2, tanh_k,0);
+    estimated_data = estimated_data1.';
+    % residuals = (estimated_data(:,1) - state_data(:,3)) + (estimated_data(:,2) - state_data(:,4)).^2 + ...
     %             (estimated_data(:,3) - state_data(:,5)).^2 + (estimated_data(:,4) - state_data(:,6)).^2;
-    % res = sum(residuals);
+    res(:,1) = (estimated_data(:,3) - state_data(:,5));
+    res(:,2) = (estimated_data(:,4) - state_data(:,6));
 
 end

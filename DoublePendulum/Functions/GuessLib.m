@@ -25,8 +25,12 @@ Data(:,Index)=dX(:,1);
 Sym_Struct{1,Index}=Symbol_dX(iter);
 Index=Index+1;
 
+Data(:,Index)=dX(:,1).*cos(Basis(:,2));
+Sym_Struct{1,Index}=Symbol_dX(iter)*cos(Basis_Sym(1,2));
+Index=Index+1;
+
 Data(:,Index)=dX(:,1).*cos(Basis(:,2)).^2;
-Sym_Struct{1,Index}=Symbol_dX(iter)*cos(Basis_Sym(1,2)).^2;
+Sym_Struct{1,Index}=Symbol_dX(iter)*cos(Basis_Sym(1,2))^2;
 Index=Index+1;
 
 %old

@@ -1,0 +1,95 @@
+%% Close all, clear all, clc
+close all;clear all; clc;
+[status,msg] = mkdir('Results');
+addpath('Functions')
+set(0,'defaulttextInterpreter','latex')
+format long
+warning('off','MATLAB:rankDeficientMatrix')
+set(0,'DefaultFigureVisible','off');
+%%
+% Hz, u, u_test, noise
+fprintf('Run started at %s\n', datestr(now,'HH:MM:SS'));
+m1=0.002000470448860; m2=0.002153227319931;
+
+resultsFile = 'Results/all_results.mat';
+Results = [];   % initialize empty
+
+counter = 1;
+
+% Pendulum arm length
+l1=0.0925; l2=0.063;
+
+% Damping ratio
+Jm1=0.000095751475154; Jm2=0.000899016338872;
+b1=0.005759843843316; b2=0.012080972309640;
+tau1=1e-12; tau2=0.012080972309640;
+tanh_k=1000;
+
+state0=[0;0;0;0];
+state0_test=[pi-1;pi-0.4;0.1;-0.1];
+
+Control = 1;
+Shuffle = 0;
+
+freqs = [1000,500,100];
+noises  = [0,0.0001,0.0005,0.001,0.005];
+
+T_test=2;tspan_test=0:0.001:T_test;
+
+u_test=[-0.1/1.5*(sin(tspan_test.*2*pi*4))
+        -0.1*(sin(tspan_test.*2*pi*4))];
+
+[dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, Jm1, Jm2, b1, b2, tau1, tau2, tanh_k,0),state0_test,u_test,tspan_test,0,Control,Shuffle);
+
+for freq = freqs
+
+    dt = 1/freq;
+    Tf = 15; tspan = 0:dt:Tf;
+
+    % Define your input signals as a cell array
+    inputs = {
+        [(0.3*(sin(tspan.*2*pi*0.1))); (0.3*(cos(tspan.*2*pi*0.12)))],
+        [(0.3*(sin(tspan.*2*pi*4)));   (0.3*(cos(tspan.*2*pi*4.8)))],
+        [0.3*chirp(tspan,0.1,Tf,5,'logarithmic'); 0.3*chirp(tspan,0.12,Tf,6,'logarithmic',-90)],
+        
+        
+    };
+
+    for k = 1:length(inputs)
+        u = inputs{k};   % extract the 2xN matrix
+
+        [dData, Data] = Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, ...
+                                    Jm1, Jm2, b1, b2, tau1, tau2, tanh_k,0), ...
+                                    state0, u, tspan, 0, Control, Shuffle);
+
+        for noise = noises
+
+            if noise == 0
+                nTrials = 1;   % only run once for zero noise
+            else
+                nTrials = 5;  % run 10 times for nonzero noise
+            end
+            
+            for i = 1:nTrials
+                noisyData  = Data  + noise * randn(size(Data));
+                noisydData = dData + noise * randn(size(dData));
+
+                result = run_double_pendulum(freq, u, u_test, 0, noisyData, noisydData, Data_test, dData_test, dt, tspan, tspan_test, state0_test);
+                % store in struct
+                Results(counter).freq   = freq;
+                Results(counter).input  = k;
+                Results(counter).noise  = noise;
+                Results(counter).trial  = i;
+                Results(counter).result = result;
+
+                % save after each run (overwrite file with updated Results)
+                
+                save(resultsFile, 'Results');
+                fprintf('Run %d completed at %s\n', counter, datestr(now,'HH:MM:SS'));
+
+                counter = counter + 1;
+
+            end
+        end
+    end
+end
