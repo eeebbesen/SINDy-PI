@@ -5,6 +5,7 @@ function ekfFuncs = EKF_precompute(choice)
 %   - params: struct with at least l1 and l2
 % Output:
 %   - ekfFuncs: struct with EKF function handles + symbolic forms
+choice = 1;
     % === 1. Load symbolic ODE ===
     if choice == 1
     data = load("saved_regode.mat");
@@ -41,11 +42,11 @@ function ekfFuncs = EKF_precompute(choice)
     F_k_sym = jacobian(f_k_sym, x);
     H_k_sym = jacobian(h_k_sym, x);
 
-    % === 6. Convert to MATLAB functions (in-memory only) ===
-    ekfFuncs.f_k = matlabFunction(f_k_sym, 'Vars', {x, u, dt});
-    ekfFuncs.h_k = matlabFunction(h_k_sym, 'Vars', {x});
-    ekfFuncs.F_k = matlabFunction(F_k_sym, 'Vars', {x, u, dt});
-    ekfFuncs.H_k = matlabFunction(H_k_sym, 'Vars', {x});
+    % === 6. Convert to MATLAB functions ===
+    ekfFuncs.f_k = matlabFunction(f_k_sym, 'Vars', {x, u, dt}, 'File', 'f_k_func');
+    ekfFuncs.h_k = matlabFunction(h_k_sym, 'Vars', {x}, 'File', 'h_k_func');
+    ekfFuncs.F_k = matlabFunction(F_k_sym, 'Vars', {x, u, dt}, 'File', 'F_k_func');
+    ekfFuncs.H_k = matlabFunction(H_k_sym, 'Vars', {x}, 'File', 'H_k_func');
 
     % Optional: include symbolic forms
     ekfFuncs.f_k_sym = f_k_sym;

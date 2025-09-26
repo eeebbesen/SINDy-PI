@@ -52,11 +52,11 @@ else
     state0=[0;0;0;0];
     state0_test=[pi-1;pi-0.4;0.3;0.4];
     
-    u=[(0.3/1.5*(sin(tspan.*2*pi*8)))
-       (0.3*(cos(tspan.*2*pi*7)))];
+    u=[(0.1*(sin(tspan.*2*pi*4)))
+       (0.0*(cos(tspan.*2*pi*7)))];
     % u = [2 * ones(1, length(tspan)); 
     %      -1 * ones(1, length(tspan))];
-    u_test=[-0.1/1.5*(sin(tspan_test.*2*pi*4))
+    u_test=[-0./1.5*(sin(tspan_test.*2*pi*4))
        -0.1*(sin(tspan_test.*2*pi*4))];
 end
 
@@ -74,8 +74,8 @@ Partial = 1;
 %Define whether you want to use smoothened measurements for partial.
 % Savitzky-Golay, maybe try splines.
 Smoothing = 0;
-sgolay_order = 4;   % Polynomial order
-sgolay_window = 45; %0n55, 0.1n185
+sgolay_order = 3;   % Polynomial order
+sgolay_window = 55; %0n55, 0.1n185
 
 %To permorm SINDy, 1, else 0
 Sindy = 1;
@@ -89,7 +89,7 @@ Shuffle = 0;
 
 %If you have provided data 1, or 0 to simulate
 ProvidedData = 0;
-%loaded = load('C:\Users\ppiuq\Desktop\Test data 9\desync chirp f1.mat');
+loaded = load('C:\Users\ppiuq\Desktop\Test data 9\desync chirp f1.mat');
 %loaded = load('C:\Users\ppiuq\Desktop\Test data 9\constant freq f1.mat');
 %loaded = load('C:\Users\ppiuq\Desktop\Test data 2\m01 0.1t 25f.mat');
 %loaded = load('C:\Users\ppiuq\Desktop\Test data 2\m03 sin .1t 25f.mat');
@@ -101,7 +101,7 @@ ProvidedData = 0;
 % step = 5;
 
 % post bugfix
-data_range = 1000:10000;
+data_range = 5000:20000;
 data_type_range = 13:14;
 step = 1;
 
@@ -130,6 +130,8 @@ inp = 0;
 end
 
 else
+[dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, Jm1, Jm2, b1, b2, tau1, tau2, tanh_k,0),state0_test,u_test,tspan_test,noise,Control,Shuffle);
+
 % Handle provided data
 vars = fieldnames(loaded);
 Y = loaded.(vars{1}).Y;         % Y is 1x29 struct array
@@ -147,11 +149,11 @@ tspan = tArray{1};
 idx = 1:step:length(tspan);
 
 Data = Data(idx, :);
-Data_test = Data;
+% Data_test = Data;
 u = u(:, idx);
 tspan = tspan(idx);
-tspan_test = tspan(1:1:round(size(u,2)/4));
-u_test = u(:,1:length(tspan_test));
+% tspan_test = tspan(1:1:round(size(u,2)/4));
+% u_test = u(:,1:length(tspan_test));
 dt = tspan(2)-tspan(1);
 end
 
@@ -223,6 +225,8 @@ PartialdData = [VelData, AccData];
 
     % Preallocate
     PosData = Data_test(:, 1:2);
+    VelData = zeros(size(PosData));
+    AccData = zeros(size(PosData));
 
     % Loop over each dimension (e.g., x, y)
     for i = 1:size(PosData, 2)
@@ -604,8 +608,8 @@ state0_test=[Data(1,1:2).';0;0];
 if ProvidedData ~= 1
 [dData_test,Data_test]=Get_Sim_Data(@(t,y,inp)DouPenODE(t, y, inp, l1, l2, m1, m2, Jm1, Jm2, b1, b2, tau1, tau2, tanh_k,0),state0,u_test,tspan_test,Noise_test,Control,Shuffle);
 else
-    Data_test = Data(1:length(tspan_test),:);
-    dData_test = dData(1:length(tspan_test),:);
+    % Data_test = Data(1:length(tspan_test),:);
+    % dData_test = dData(1:length(tspan_test),:);
 end
 %% Save the result
 File_Name=strcat('Results/DoublePendulum_NoiseLevel_',num2str(noise),'.mat');
