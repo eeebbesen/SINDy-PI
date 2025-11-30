@@ -77,7 +77,7 @@ for f = 1:length(dataFiles)
     tspan = [tspan; tspan_tmp];
 end
 
-%% get testing data
+%% get validation data
 data_range = 5000:7000;
 data_type_range = 13:14;
 step = 1;
@@ -101,7 +101,7 @@ Data_test = Data_test(idx_test, :);
 u_test = u_test(:, idx_test);
 tspan_test = tspan_test(idx_test);
 
-%% get validation data
+%% get testing data
 
 data_range = 30150:155150;
 data_type_range = [5,6,13,14];
